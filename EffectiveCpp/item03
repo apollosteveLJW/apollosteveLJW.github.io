@@ -1,0 +1,33 @@
+//resource manager
+资源就是，一旦用了，必须还给系统，比如动态内存分配，锁，数据库连接，socket等等
+
+item13: use objects to manager resource
+依赖C++的对象析构函数自动调用机制，智能指针
+RAII:获取资源的时候便是初始化时机
+item14: think carefully about copying behavior in resource-managing classes
+资源管理类中小心copy行为
+//example
+
+class Lock {
+private:
+  mutex* pmutex;
+public:
+  explict Lock(mutex* pm):pmutext(pm){
+    lock(pmutex);
+  }
+  ~Lock() {unlock(mutex);}
+};
+
+Mutex m;
+
+{
+  Lock m1(&m);
+}
+
+Lock m11(&m);
+Lock m22(m11);//copy behavior
+
+解决方案：1.禁止复制，2.对底层资源采用"引用计数法"
+
+item15: provide access to raw resources in resource-manager classes
+

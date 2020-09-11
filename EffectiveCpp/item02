@@ -1,0 +1,79 @@
+item05: know what functions C++ silently writes and calls
+
+对象默认的成员函数：默认构造函数，默认析构函数，copy构造函数，copy assignment操作符；这些函数都是public and inline
+
+编译器会声明这些函数，只有在需要的时候才会定义创建出来
+
+
+item06: explictly disallow the use of compiler-generated functions you do not want
+
+在private中声明，且不定义
+
+item06: declare destructors virtual in polymorphic base classes
+基类指针指向派生类对象，调用delete，没有virtual的话会调用基类的析构函数，造成一个局部销毁的对象
+C++声明抽象类，抽象类一般是base class,并且不能被实例化，使用pure virtual 析构函数
+
+class A {
+public:
+  virtual ~A() = 0;
+};
+
+规则：
+polymorphic base classes应该声明virtual析构函数；如果class带有virtual成员函数，应该声明virtual析构函数，因为肯定会有vptr(virtual table pointer）指针
+如果class不是base class或者不具有多态性，不实用virtual析构函数，因为会增加class内存空间
+
+item07: prevent exceptions from leaving destructors别让异常逃离析构函数
+
+理由：析构函数吐出异常，程序会过早结束或出现不明确的行为，比如vector<A> v，析构A[0]抛出异常，后续的空间会如何处理
+
+
+item09: never call virtual function during consturction and destruction
+
+
+item10: have assignment operators return a reference to *this
+可以连锁和满足结合律 a=b=c
+class A {
+public:
+  ...
+  A& operator=(const A& rhs) {
+    ...
+    return *this;
+  }
+};
+
+
+item11: handle assignment to self in operator= 在operator=中处理“自我赋值"
+
+//错误示例
+class bitmap{};
+
+class A{
+private:
+  bitmap* bp;
+public:
+  A& operator=(const A& rhs) {
+    delete bp;
+    bp = new bitmap(*rhs.pb);
+    return *this;
+  }
+  //加入自我判断
+  A& operator=(const A& rhs) {
+    if(this->bp == rhs.bp) return *this;
+    delete bp;
+    bp = new bitmap(*rhs.bp);
+    return *this;
+   }
+};
+
+copy and swap技术
+
+class A {
+  void swap(const A& rhs);
+}
+A& A::operator=(const A& rhs) {
+  A temp(rhs);
+  swap(temp);
+  return *this;
+}
+
+item12: copy all parts of an object
