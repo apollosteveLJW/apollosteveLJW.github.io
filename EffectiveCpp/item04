@@ -1,0 +1,9 @@
+Designs and Declarations 设计与声明
+
+item18:make interfaces easy to use correctly and hard to use incorrectly
+explict防止隐式转换
+
+规则：接口的一致性，与内置数据类型兼容
+
+item19: treat class design as type design
+

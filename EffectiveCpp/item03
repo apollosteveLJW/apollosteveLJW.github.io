@@ -29,5 +29,32 @@ Lock m22(m11);//copy behavior
 
 解决方案：1.禁止复制，2.对底层资源采用"引用计数法"
 
-item15: provide access to raw resources in resource-manager classes
+item15: provide access to raw resources in resource-manager classes 在资源管理器中提供对原始资源的访问
+显式转换：auto_ptr和shared_ptr提供了get()函数返回所管理指针的复件
+隐式转换：重载了->和*操作符，隐式转换为底层指针
+
+item16: use the same form in corresponding uses of new and delete 成对使用new 和delete时要采用相同形式
+
+new:分配内存空间，调用构造函数
+delete:调用析构函数，释放内存空间
+
+数组所用的内存还包括数组大小的记录，以便delete知道需要调用多少次析构函数
+
+注意：尽量不对数组，vector使用typedef
+typedef std::string AddressLine[4];
+std::string* pal = new AddressLine;
+delete pal;//error
+delte[] pal;
+
+
+item17:store newed objects in smart pointers in standalone statements以独立语句将newed对象置入智能指针
+
+bad case
+
+void fun(std::shared_ptr<A> pA, int priority());
+fun(new A, priority())//std::shared_ptr无法进行隐式转换
+improve: fun(std::shared_ptr<A>(new A), priority());严格遵循对象管理资源原则，但可能会出现内存泄漏
+
+在没有关联的指令语句之间，C++执行次序有很大的弹性，可能先执行priority()，再执行std::shared_prt<A> 构造函数，如果priority()出现异常，导致内存资源没有被管理，出现内存泄漏
+所以要用独立语句将指针对象置于智能指针中
 
