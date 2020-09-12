@@ -6,4 +6,14 @@ explict防止隐式转换
 规则：接口的一致性，与内置数据类型兼容
 
 item19: treat class design as type design
+考虑一下几个问题：
+1.新type的对象如何创建并销毁
+2.对象的初始化和对象的赋值该有什么样的差别？
+3.新type的对象如何被pass bu value,意味着什么》copy构造函数用来定义一个新的type的pass by value行为
+4.什么样的新type是合法值，构造函数，赋值操作符和setter函数需要进行的异常检查
+5.type是否有继承或者被继承，影响virtual
+
+item20:prefer pass by value to const to pass-by-value
+缺省情况下，C++以by-value传递对象至函数，需要多次调用构造函数和析构函数，代价高
+
 
