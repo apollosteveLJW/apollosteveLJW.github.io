@@ -34,4 +34,16 @@ non-member non-friend函数封装性比member函数更高
 item24: declare non-member functions when type conversions should apply to all parameters
 
 item25: consider support for a non-throwing swap
-
+swap 异常安全性编程的脊柱
+bad coding std::swap一般形式
+template<typename T>
+void swap(T& a, T& b) {
+  T temp(a);
+  a = b;
+  b = temp;
+}
+问题：加入类内部只有指针成员变量，
+规则：
+1.std::swap效率不高的时候，考虑提供一个swap成员函数，并确定这个函数不抛出异常
+2.提供member swap之后，提供一个non-member swap调用前者，对于classes ，特化std::swap
+3.调用swap使用using std::swap

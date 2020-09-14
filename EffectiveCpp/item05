@@ -1,0 +1,122 @@
+implementations
+
+item26: postpone variables definations as long as possible
+循环：变量定义在循环内还是循环外
+循环内：n个构造函数+ n个析构函数(如果使用default构造函数，还需要n个复制操作)
+循环外: 1个构造函数+ 1个析构函数+n个赋值操作
+因此：1.赋值操作成本比构造+析构低，2.代码对效率高度敏感 只有满足这两个条件才在循环外，否则一般情况下在循环内
+
+item27: minimize cast 尽量少做转型动作
+const_cast<T>(expression):
+消除对象的常量性，将const转换为non-const
+
+dynamic_cast<T>(expression):
+主要用来执行"安全向下转型",父类转化为子类，可能耗费较大成本
+
+reinterpret_cast<T>(expression)
+执行低级转型，pointer cast to int
+
+static_cast<T>(expression)
+强迫隐式转换，例如将non-const -> const pointer-to-base -> pointer-to-derived
+
+class Window {
+public:
+  virtual void onSize(){}
+};
+
+class SpecialWindos {
+public:
+  virtual void onSize {
+    static_cast<Window>(*this).onSize(); //会有错误，会在当前对象的base class的副本上调用window::onSize()，作为non-const函数，可能改变成员变量，当不会改变当前对象的base class
+  }
+};
+
+correct:
+virtual void onSize {
+  Window::onSize();
+  ...
+}
+
+注意：dynamic_cast是安全的，但代价比较高，一个很普通的实现版本基于"class 字符串比较"
+
+当你需要在derived class对象身上执行derived function，但你只有base class对象，必须使用dynamic_cast
+
+规则：
+1.如果可以，尽量避免转型，特别是在注意效率的代码中避免dynamic_cast，如果设计必须转型动作，试图发展无需转型的的替代设计
+2.如果转型是必要的，试着将他隐藏到某个函数背后，客户随时可以调用该函数，而不需将转型放进他们自己的代码内
+3.宁可使用C++ style的转型，不要使用旧式转型，前者很容易辨别出来，而且有着分门别类的功能
+
+item28: avoid returning "hadnles" to object internals
+
+example:矩阵类，为了尽可能使对象小，使用struct表示左上角和右下角
+
+class Point {
+public:
+  Point(int x, int y){...}
+  void setX(int newVal);
+  void setY(int newVal);
+  ...
+}
+
+struct RectData {
+  Point ulhc;
+  Point lrhc;//lower right-hand corner
+}
+
+class Rectangle {
+  ...
+private:
+  std::shared_ptr<RectData> pData;
+
+public:
+  Point& upperLeft const {
+    return pData->ulhc;
+  }
+}
+设计可以通过编译，但是错误的，返回reference，用户可以修改，但函数声明为cosnt函数
+handle指reference,指针和迭代器，返回handle会降低对象的封装性
+
+correct: const Point& upperLeft() const { return pData->ulhc;}
+
+但还很可能导致dangling handles, handle所属对象不复存在
+
+
+item29: strive for exception-safe code 为"异常安全"努力是值得的
+
+bad code:
+void PrettyMenu::changeBackgroud(std::istream& imgSrc) {
+  lock(&mutex);
+  delete bdImage;
+  ++imageChanges;
+  bgImage = new Image(imgSrc);
+  unlock(&mutex);
+}//new Image发生异常，会导致mutex不能解锁，造成资源泄漏
+
+当异常被抛出时，带有异常安全性的函数会：
+1.不泄漏任何资源
+2.不允许数据破坏
+
+exception-safe function需要提供三个保证之一：
+1.基本承诺：如果抛出异常，程序内任何事物都保持在有效状态
+2.强烈保证：如果异常被抛出，程序状态不改变。调用函数失败，会回到调用函数之前的状态
+3.不抛掷承诺nothrow:承诺绝不抛出异常
+
+optimize:
+void PrettyMenu::changeBackgroud {
+  lock m1(&mutex);
+  bgImage.reset(new Image());
+  ++bgImage;
+}
+注：std::shared_ptr<T>.reset(new pointer())指向另一个对象，原对象引用计数-1；
+    pointer被shared_ptr管理后，避免使用普通指针访问，因为自动释放后会造成普通指针变成悬空指针
+copy and swap:修改对象数据的副本，在不抛出异常的情况下，更换原对象和副本
+
+规则：
+1.exception-safe function即使出现异常，也会保证不出现资源泄漏和任何数据结构被破坏。有三个等级的异常安全：基本保证，强烈保证，no throw
+2.强烈保证往往通过copy-and-swap实现出来，但强烈保证并非对所有函数都适用，copy-and-swap需要付出时间和空间代价
+
+item30: understands the ins and outs of inline
+}
+
+
+
