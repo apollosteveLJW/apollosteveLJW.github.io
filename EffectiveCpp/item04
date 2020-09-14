@@ -15,5 +15,23 @@ item19: treat class design as type design
 
 item20:prefer pass by value to const to pass-by-value
 缺省情况下，C++以by-value传递对象至函数，需要多次调用构造函数和析构函数，代价高
+pass-by-value会造成切割问题，参数为父类，传入子类对象，会slice，pass-by-reference-to-const不会出现此问题
 
+references往往以指针实现，所以内置类型可以采用pass-by-value，一般比指针小；但用户自定义类型尽量用pass-by-reference-to-const
+规则：
+1.尽量使用pass-by-reference-to-const代替pass-by-value
+2.以上规则并不适用于内置类型，以及STL的迭代器和函数对象
+
+item21: don't try to return a reference when you must return an object 必须返回对象时，别妄想返回reference
+规则：
+1.绝不要返回pointer和reference指向一个Local stack对象，或返回reference指向一个heap-allocated对象，或返回pointer或reference指向一个local static对象而有可能需要多个这个对象
+
+item22: declare data members private
+
+item23: prefer non-member non-frined functions to member functions
+non-member non-friend函数封装性比member函数更高
+
+item24: declare non-member functions when type conversions should apply to all parameters
+
+item25: consider support for a non-throwing swap
 
