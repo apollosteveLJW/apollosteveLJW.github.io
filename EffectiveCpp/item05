@@ -116,7 +116,65 @@ copy and swap:修改对象数据的副本，在不抛出异常的情况下，更
 2.强烈保证往往通过copy-and-swap实现出来，但强烈保证并非对所有函数都适用，copy-and-swap需要付出时间和空间代价
 
 item30: understands the ins and outs of inline
+inline:使用方式像函数，但不能有函数调用的额外开销
+缺点：inline会用函数本体替换，增加object code大小，可能会导致额外的换页行为，降低指令告诉缓存装置的击中率
+
+注：inline函数和template函数通常都被定义在头文件内
+
+编译器拒绝将太过复杂(循环或递归)的函数inlining,所有对virtual函数的调用也都会使inlining落空。因为virtual知道运行期才知道是哪个函数，而inline通常情况下是编译期行为
+
+构造函数和析构函数一般不声明为inline函数 原因：子类会调用父类构造函数，如果使用inline，容易造成代码膨胀
+
+inline缺点：2.inline函数无法随着程序库升级而升级；一旦改变inline f，所有用到f的客户端都需要重新编译
+3.大多数调试器面对inline函数束手无策
+
+item31: minimize compilation dependencies between files将文件间的编译依存关系降到最低
+“将对象实现类目隐藏到一个指针背后” 分成两个class，一个只提供接口，一个负责实现该接口
+class PersonImpl;
+class Person {
+private:
+  std::shared_ptr<PersonImpl> pImpl;
 }
+这种分离的关键是用"声明的依存"代替"定义的依存性",这是编译依存最小化的本质
+注：
+1.如果使用object reference或object pointer可以完成任务，就不要使用objects。只需要类型声明式就可定义出reference和pointer，但需要定义才能定义出object(需要对象所占空间)
+2.如果可以，尽量用class声明式代替class定义式
+3.为声明式和定义式提供不同的头文件
 
+pimpl idom class: main class只包含指向实现的指针
+////
+interface class
+class Person {
+  virtual ~Person();
+  virtual std::string name() const = 0;
+  virtual std::string birthDate() const = 0;
+  virtual std::string address() const = 0;
+  ...
+}
+使用该class的客户必须以Person的pointer或者reference编写程序，因为不可能针对内含pure virtual函数的class具现出实体，然而可对derived class产生实体对象
+使用特殊函数为这类class创建对象，称为factory function or virtual construct function,返回指针，指向动态内存分配的对象(智能指针更为可取),这种函数往往被声明为static
 
+class Person {
+  ...
+  static Person* create(const std::string& name,
+                     const Data& birthday, const Address& addr);
+  ...
+};
+声明为static的思考，因为需要产生Person对象，如果是成员函数，必须先产生Person对象才能调用，形成死循环
+class RealPerson {
+public:
+  RealPerson(const std::string& name, const Data& date, const Address& addr):theName(name,=),theData(date),theAddress(addr){}
+  virtual ~RealPerson();
+  std::string name() const;
+  std::string date() const;
+  std::string Address() const;//必须有定义
+private:
+  std::string theName;
+  Date theDate;
+  Address theAddress;
+};
+factory function
+std::shared_prt<Person> Person::create(argv) {
+  return std::shared_ptr<Person>(new RealPerson(argv));
+}
 

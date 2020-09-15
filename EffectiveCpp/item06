@@ -1,0 +1,9 @@
+Inheritance and Object-Oriented Design 继承和面向对象设计
+
+item32: make sure public inheritance models is "is-a"
+public继承主张，base class对象发生的每一件事情，derived class也能发生
+
+
+tiem33: avoid hiding inherited names 避免遮掩继承而来的名称
+
+
