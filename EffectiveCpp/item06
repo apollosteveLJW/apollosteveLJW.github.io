@@ -5,5 +5,153 @@ public继承主张，base class对象发生的每一件事情，derived class也
 
 
 tiem33: avoid hiding inherited names 避免遮掩继承而来的名称
+about scope
+名称查找规则；local -> ... -> global
+base class scope包含derived class
+
+名称遮掩的后果：
+class Base {
+  virtual void mf1() = 0;
+  virtual void mf1(int);
+  virtual void mf2();
+  void mf3();
+  void mf3(double);
+};
+class Derived {
+  virtual void mf1();
+  void mf3();
+  void mf4();
+};
+
+Derived d;
+d.mf1() //correct
+d.mf1(x); //error Derived::mf1()遮掩了base::mf1().本质上这种不继承重载函数的行为违反了public 是 'is-a'准则
+
+//improve
+class Derived: public Base {
+  using Base::mf1;
+  using Base::mf3;//让base class内名为mf1和mf3的所有在derived作用域内可见，并且是public
+  ..
+};
+
+//如果并不想继承所有函数，只希望继承没有参数的mf1，采用forwarding function 转交函数
+class Derived : private Base {
+  virtual void mf1() {
+    Base::mf1();//转交函数，会变成inline
+  }
+};
 
 
+item34: differentiate between inheritance of interface and inheritance of implementation 区分接口继承和实现继承
+
+class Shape {
+  virtual void draw() = 0;
+  virtual void error();
+  int objectId() const;
+};
+pure virtual:派生类必须有该函数的定义，
+impure function:你必须支持一个function，你如果自己不想实现，可以继承基类的实现版本
+
+“提供缺省实现给derived class，除非他要求否则免谈"
+
+
+
+item35: consider alternatives to virtual function 考虑virtual函数以外的选择
+
+non-virtual interface实现template method
+
+function pointers 实现strategy模式
+“人物健康指数的计算与人物无关”，要求每个人物类的构造函数接受一个指针，这个指针指向健康计算函数
+
+class GameCharacter;//forward declaration
+
+int defaultHealthCalc(const GameCharacter& gc);
+
+class Gamecharacter {
+public:
+  typedef int (*HealthCalcFunc)(const GameCharacter&);
+  explict GameCharacter(HealthCalcFunc hcf = defaultHealthCalc):healthFunc(hcf){}
+  int healthValue() const {
+    return healthFunc(*this);
+  }
+private:
+  HealthCalcFunc healthfunc;
+};
+常见的strategy设计模式，和内部的virtual函数比较，提供了几个弹性：
+1.同一人物类型的不同实体可以有不同的健康计算函数 //传入不同的函数指针
+2.以知人物的健康计算函数可以在运行期变更，比如提供一个setHealthCalcfunc()函数
+缺点：无法访问class 的non-public部分，特定情况下会降低封装性
+
+借助std::function实现Strategy模式
+
+typedef std::function<int (const GameCharacter&) > HealthCalcfunc;
+//HealthCalcFunc可以是任何可调用物，可被调用并接受任何兼容于GameCharacter，返回任何兼容于int
+此种设计，可以产生很多弹性
+short calcHealth(const GameCharacter&);//返回类型non-int
+
+struct HealthCalculator {
+  int operator() (const GameCharacter&) const {
+    ...
+  }
+}; //为健康计算设计的函数对象
+
+class GameLevel {
+public:
+  float helath(const GameCharacter&) const;//成员函数，返回non-int类型
+  ...
+};
+
+class EvilBadGuy: public GameCharacter {
+  ...
+};
+class EyeCandyCharacter: public GameCharacter {
+  ...
+};
+
+EvilBadGuy ebg1(calcHealth);
+EyeCandyCharacter ecc1(HealthCalculator());//使用函数对象计算健康指数
+...
+EvilBadGuy ebg2(std::bind(&GameCharacter::health, currentLevel, -1));
+
+规则：
+1.virtual函数的替代方案包括non-virtual interface和strategy设计模式，NVI本身是一种特殊形式的template method设计模式
+2.将机能从成员函数转移到class外部函数，会降低封装性
+3.std::function的对象行为类似一般的函数指针，这样的对象可兼容“与给定之目标签名式(target signature)兼容的所有可调用物
+
+item36: never redefine an inherited non-virtual function
+non-virtual函数都是静态绑定的staticlly bound
+
+item37: never redefine a function's inherited default parameter value 绝不重新定义继承而来的缺省值
+question:如何继承一个带有缺省值的virtual function(virtual dynamic bound, default parameter value statically bound)
+
+class Shape {
+public:
+  enum ShapeColor { red, green, blue};
+  virtual void draw(ShapeColor color = red) const = 0;
+};
+
+class Rectangle: public Shape {
+  virtual void Draw(ShapeColor color = green) const;
+};
+
+class Circle: public Shape {
+public:
+  virtual void Draw(ShapeColor color) const:
+};
+//当客户以对象调用此函数时，一定要指定参数值，因为静态绑定下这个函数并不从base继承缺省参数，但若以指针(或reference)调用此函数，可以不指定参数值，因为动态绑定下这个函数会从base继承缺省参数值
+Shape* pr = new Rectangle;
+pr->draw();
+调用的是rectangle的draw函数，但缺省值是静态绑定，与pr的静态类型shape一致，使用的是red，产生了神奇的现象
+规则：
+1.绝对不要重新定义继承而来的缺省值，因为缺省参数值都是静态绑定，而virtual函数却是动态绑定
+
+item38: model 'has-a' or 'is-implemented-in-terns-of' through composition 通过复合塑膜出has-a或根据某物实现出
+当某种class内含别种class的时候，就是复合，composition
+程序中的对象其实相当于你所塑造的世界中的某些事物，例如人/汽车/一张张视频画面等，这样的对象属于应用域
+其他对象则纯粹是实现细节上的人工制品，例如缓冲区/互斥器/查找树等，此为实现域
+规则：
+1.复合的意义与public继承完全不同
+2.在应用域(application domain)，复合意味着has-a.在实现域(implementation domain)，复合意味着is-implemented-in-terns-of(根据某物实现出)
+
+item39: use private inheritance judiciously 明智而谨慎的使用private继承
+privte继承意味着implementation-in-terms-of
