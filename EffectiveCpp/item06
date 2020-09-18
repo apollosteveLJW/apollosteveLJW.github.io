@@ -154,4 +154,41 @@ item38: model 'has-a' or 'is-implemented-in-terns-of' through composition 通过
 2.在应用域(application domain)，复合意味着has-a.在实现域(implementation domain)，复合意味着is-implemented-in-terns-of(根据某物实现出)
 
 item39: use private inheritance judiciously 明智而谨慎的使用private继承
-privte继承意味着implementation-in-terms-of
+privte继承意味着implementation-in-terms-of根据某物实现出
+private继承意味着只有实现部分被继承，接口部分被忽略
+composition与private继承：尽可能使用复合，必要时才使用private继承
+
+设计空间最优化的激进情况：class不带任何数据，且没有non-static变量，没有virtual函数
+class Empty{}; sizeof(Empty) != 0 独立对象都不为0
+base class不是独立对象，如果继承empty,而不是复合
+class HoldAsInt: public Empty {
+private:
+  int x;
+};
+sizeof(HoldAsInt) == sizeof(Int) 原因：EBO(empty base optimization 空白基类最优化),一般在单个继承才有作用
+
+规则：
+1.private继承意味is-implemented-in-terms-of(根据某物实现出)，他通常比复合的级别低，但是当derived class需要访问protected base class的成员，或需要重新定义virtual函数时，可以使用private继承
+2.和复合不同，private继承可以造成EBO
+
+item40: use multiple inheritance judiciously 慎重使用多重继承
+
+//程序有可能从多个base class继承相同名称，会导致歧义
+class A {
+public:
+  void checkOut();
+};
+class B {
+private:
+  bool checkOut();
+};
+class C: public A, public B {};
+即使一个是private，一个是public，调用也是歧义的。因为C++解析重载函数的调用规则是：先找到调用函数的最佳匹配，找到之后再确定是否可用
+
+//钻石型多重继承 A <- B, C; B, C <- D D里面有两份A，需要使用virtual继承
+规则：
+1.多重继承比单一继承复杂，他可能会导致新的歧义性，以及对virtual继承的需要
+2.virtual继承会增加大小、速度、初始化（及赋值）复杂度等成本
+3.多重继承的确有正当用途，其中一个设计"public继承某个interface"和"private继承某个协助实现的class"
+
+

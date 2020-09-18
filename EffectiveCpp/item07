@@ -1,0 +1,110 @@
+templates and generic programming 模板和泛型编程
+
+item41: understand implict interfaces and compile-time poly-morphism 了解隐式接口和编译器多态
+
+“编译器多态”和“运行期多态”：哪一个重载函数该被调用， 哪一个virtual函数该被绑定
+
+规则：
+1.classes和templates都支持接口，多态
+2.对classes而言接口是显式的，以函数签名为中心，多态则是通过virtual函数发生在运行期
+3.对template参数而言，接口是隐式的，多态则是通过template具现化，和函数重载解析，发生在
+
+item42: understand the two meanings of typename 了解typename的双重含义
+
+template<class T> class Widget;
+template<typename T> class Widget;//两者完全相同
+
+//
+template<typename T>
+void print2d(const T& container) {
+  if(container.size() >= 2) {
+    C::const_iterator iter(container.begin());
+    ...
+  }
+}
+C++开始解析print2d,并不知道C是什么，所以const_iterator会造成歧义：C++如果在解析的时候碰到nested dependent type name嵌套从属名称，他假设此名称不是类型，(可能是static或者global变量),所以缺省情况下嵌套从属名称不是类型
+需要放置typename解决此问题
+
+
+item43: know how to access names in templatized base classes
+template<typename company>
+class LoggingMsgSender: public MsgSender<company>{
+  ...
+};
+非法，编译器不会通过，因为无法知道MsgSender<company>的实现，是否存在接口等疑问，base class template很可能被特化
+解决方法：
+1.this 指针
+class LoggingMsgSender: public MsgSender<company> {
+  void sendClearMsg (const MsgInfo& info) {
+    this->sendClear(info);
+  }
+};
+
+2.using声明
+class LoggingMsgSender: public MsgSender<company> {
+  using MsgSender<company>::sendClear();
+  void sendClearMsg(const MsgInfo& info) {
+    sendClear(info);
+  }
+};
+
+3.MsgSender<company>::sendClear(info);
+
+item44: factor parameter-independent code out of template 将与参数无关的代码抽离templates
+使用template,编译器会帮你具化具体的class后者function，可能导致代码膨胀，源码看起来很简单，但目标码可能不是那么一回事
+
+如何避免上述问题：共性和变性分析(commonality and variability analysis)
+
+两个函数有相同的部分，将相同部分写成第三个函数供调用；两个class有相同的部分，将相同部分迁移到新class，然后使用继承或者复合
+
+///example
+template<typename T, std::size_t n>
+class SqureMatrix {
+public:
+  ...
+  void invert();
+  ...
+};
+
+SquareMatrix<double, 5> sm1;
+sm1.invert();
+
+SquareMatrix<double, 10> sm3;
+sm2.invert();
+
+具现两份invert，切=且拥有相同部分，造成代码膨胀
+
+
+item45: use member function templates to accept "all compatible types" 运用成员函数模板接受所有兼容类型
+真实指针做的很好的一件事情是，支持隐式转换，derived class指针转换为base class指针， non-const转换为const
+
+member function template
+template<typename T>
+class SmartPtr {
+  template<typename U>
+  SmartPtr(const SmartPtr<U>& other); //泛化copy构造函数 generalized copy 构造函数
+
+};
+
+
+item46: define non-member functions inside templates when type conversion are desired
+
+
+item47: use traits classes for information about types 使用traits class表现类型信息
+将迭代器移动某个距离
+template<typename IterT, typename DistT>
+void advance(IterT& iter, DistT& d);
+五种迭代器：
+input迭代器，只能向前移动，且一次一步，只可读取指向的东西，典型的istream_iterators 模型输入文件的read pointer
+output迭代器：只能向前移动，且一次一步，只能write指向的东西，模仿输出文件的write pointer，典型的ostream_iterator
+forward迭代器：可以做input和outpue迭代器能做的每一件事情，且可以读或写一次以上
+bidirectional迭代器：可双向移动 set,multiset,map,multimap的迭代器都是这个分类
+random access迭代器，可以在常量时间内向前或向后移动若干距离，vector,deque,string都是这类类型
+
+C++提供了tag_struct区分：
+struct input_iterator_tag{};
+struct output_iterator_tag{};
+struct forward_iterator_tag: public input_iterator_tag, public output_iterator_tag{};
+struct bidirectional_iterator_tag: public forward_iterator_tag{};
+struct random_access_iterator_tag: public bidirectional_iterator_tag{};
+
