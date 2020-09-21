@@ -134,3 +134,38 @@ struct iterator_traits<IterT*> {
   typedef random_access_iterato_tag ierator_category;
 };
 
+template<typename IterT, typename DistT>
+void advance(IterT& iter, DistT& d) {
+  if(typeid(typename std::iterator_traits<IterT>::iterator_category) == 
+     typeid(std::random_access_iterator_tag)) {
+    ...
+  }
+  ...
+}
+
+Iter在编译器确定，但if语句确在运行期才能核定，将编译器能完成的事情拖到运行期，不仅浪费时间，而且造成可执行文件膨胀
+使用重载，在编译器确定
+规则：
+1.traits classes使得"类型相关信息"在编译器确定，他们以templates和"templates"特化完成实现
+2.整合重载技术(overloading)后，traits classes有可能在编译器对类型执行if...else测试
+
+item48: be aware of template metaprogramming 认识template 元编程
+template metaprogramming（TMP,模板元编程）是编写template-based C++程序并执行于编译期间的过程
+
+TMP两大作用：
+1.让某些事情变得容易
+2.TMP执行于C++编译器，可将一些工作从运行期转移到编译器
+
+TMP是图灵完全的，就是可以计算任何事物
+例如内部是没有循环的，借助递归实现
+///example 计算阶乘
+template<unsigned n>
+struct Factorial {
+  enum {value = n*Factorial<n-1>::value};
+};
+
+template<>
+struct Factorial<0> {
+  enum {value = 1};
+};
+
