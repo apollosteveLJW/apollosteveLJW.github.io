@@ -1,0 +1,22 @@
+杂项讨论
+
+item53: pay attention to compile warnings 不要忽视编译器的警告
+class Base {
+public:
+  virtual void f() const;
+};
+
+class Derived : public Base {
+public:
+  virtual void f();
+};
+编译器发出警告warning: Derived::f() hides Base::f()。完全遮掩了base::f，见item35
+
+规则：
+1.严肃对待编译器发出的警告信息，努力争取“无警告”荣誉
+2.不要过度依赖编译器的警告行为
+
+item54: familiarize yourself with the standard library, including TRI
+
+
+item55: familiarize yourself with booast

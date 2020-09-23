@@ -1,0 +1,41 @@
+RSA基本思想：
+  在有边界的区域内，往里面不断加入图形，直至最后一个图形循环一定次数，仍然找不到位置。
+
+需要解决几个问题：
+1.边界的表示：周期边界，图形需要判断是否越界，为了一致性，用图形表示边界，生成一块区域
+  如何用图形表示边界，用相同类型的图形，一条边表示边界的一部分，另外部分位于边界外侧
+  由于最后形成的图形与边界节点密切相关，所以需要考虑边界如何布点
+
+2.多边形相关问题：采用投影线法
+
+3.代码设计
+
+class Point {
+  int x, int y, int z;
+  Point(x,y ,z = 0);//默认二维
+ }
+
+//方向加边长
+class Quad {
+private:
+  std::vector<Point> points;
+public:
+  vector<Point> getPoints();
+  bool isIntersection(const Quad& other);
+  double getArea();
+  double getBackGroud();
+  vector<double> getX();
+  vector<double> getY();
+  Point getCenter();
+  int getBackGround();
+};
+
+class BackGround {
+private:
+  int num_x;
+  int num_y;
+  Point lower_left;
+  Point lower_right;
+public:
+   
+ 

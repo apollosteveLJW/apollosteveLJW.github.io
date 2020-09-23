@@ -71,4 +71,11 @@ operator new的返回值非常单纯，如果分配内存成功，就返回一�
 C++规定，即使客户要求0Byte，要需要返回一个指针
 
 item52: write placement delete if you write placement new 写了placement new一定要写placement delete
+placement new:operator new接受的参数除了size_t之外还有其余的，这就是placement new
+典型的void* operator new(size_t size, void* pMemeory) throw();用途之一是在vector未使用的空间上创建对象，最早的placement new版本
+一个特定位置上的new。参数对应的是placement delete。
+规则：
+1.当你写一个placement operator new，请明确写出对应的placement operator delete
+2.当你声明placement new和placement delete，请确定不要无意识的遮掩了其他正常版本
+
 
