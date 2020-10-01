@@ -1,0 +1,16 @@
+//basics 基础议题
+
+item01: distinguish bewteen pointers and references
+1.reference不能为null
+2.pointers可以被重新复制，reference总是指向最初的对象
+
+规则：
+当你知道自己需要某个东西，而且绝不会改变指向其他任何东西，或是当你实现一个操作而且语法需求不能被pointers满足，应该选择reference，否则任何其他时候，请选择pointers
+
+item02: prefer using c++ cast operators
+
+static_cast基本上拥有C旧式转型相同的威力和意义，以及相同的限制。你不能利用static_cast将int转成struct,或将double转为pointer
+其余的cast有专门的作用
+
+item03: never treat arrays polymorphically 绝对不要以多态的方式处理数组
+ 
