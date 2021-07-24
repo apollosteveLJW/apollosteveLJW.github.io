@@ -1,0 +1,6 @@
+/*in c++11
+auto ptr = std::unique_ptr<A>(new A);
+//but we can use make_unique or make_shared in C++14
+auto ptr = std::make_unique<A>();
+
+

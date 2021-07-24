@@ -1,0 +1,3 @@
+std::lock_guard or std::unique_lock
+
+lock_guard更加轻量级但是需要条件变量的情况下必须使用unique_lock

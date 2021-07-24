@@ -13,4 +13,10 @@ static_cast基本上拥有C旧式转型相同的威力和意义，以及相同�
 其余的cast有专门的作用
 
 item03: never treat arrays polymorphically 绝对不要以多态的方式处理数组
- 
+1.多态可以通过指针或者引用实现
+
+原因： array指向数组起始处， array[i] -> *(array + i) ,array+i在什么位置，由sizeof(type)决定,编译器必须有能力决定数组元素大小，由声明决定
+
+item04:非必要不提供default constructor
+
+1.并非所有对象都可以使用默认初始化，例如需要特定识别码的对象 
